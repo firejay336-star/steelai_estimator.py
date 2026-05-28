@@ -194,6 +194,7 @@ st.markdown(f"""
 
   /* ── Estimate history row ── */
   .history-row {{
+
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -237,6 +238,7 @@ st.markdown(f"""
   }}
 </style>
 """, unsafe_allow_html=True)
+
 
 # ─────────────────────────────────────────────
 #  SESSION STATE INIT
@@ -428,7 +430,7 @@ def simulate_extraction(filenames: list) -> pd.DataFrame:
 # ─────────────────────────────────────────────
 def compute_totals(df, markup_pct, contingency_pct):
     df = df.copy()
-    df["Supply Total"] = df["Qty"] * df["Supply Rate ($/unit)"]
+df["Supply Total"] = df["Qty"] * df["Supply Rate ($/unit)"]
     df["Labour Total"] = df["Qty"] * df["Labour Rate ($/unit)"]
     df["Line Total"] = df["Supply Total"] + df["Labour Total"]
 
@@ -587,7 +589,8 @@ def build_pdf(totals, project_name, client_name, project_number,
     story.append(Spacer(1, 6*mm))
 
     # ── Subtotals section ──
-    story.append(Paragraph("ESTIMATE SUMMARY", heading))
+
+story.append(Paragraph("ESTIMATE SUMMARY", heading))
     story.append(HRFlowable(width="100%", thickness=1, color=ORANGE_RL))
     story.append(Spacer(1, 3*mm))
 
@@ -1078,3 +1081,5 @@ if st.session_state.page == "dashboard":
     page_dashboard()
 elif st.session_state.page == "wizard":
     page_wizard()
+
+
