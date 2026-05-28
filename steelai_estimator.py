@@ -979,7 +979,10 @@ def page_wizard():
         display_df["Supply Rate ($/unit)"] = display_df["Supply Rate ($/unit)"].map(fmt_aud)
         display_df["Labour Rate ($/unit)"] = display_df["Labour Rate ($/unit)"].map(fmt_aud)
 
-st.dataframe(df, use_container_width=True, height=320)
+        st.dataframe(
+            display_df[["Description","Unit","Qty","Supply Rate ($/unit)","Labour Rate ($/unit)","Supply Total","Labour Total","Line Total","RFI"]],
+            use_container_width=True, height=340,
+        )
 
         # RFI warnings
         rfi_df = totals["df"][totals["df"]["RFI"] != ""]
