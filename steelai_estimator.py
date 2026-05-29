@@ -862,13 +862,7 @@ def page_wizard():
             st.markdown("<br>", unsafe_allow_html=True)
             st.markdown('<div class="section-heading">Extracted Quantities</div>', unsafe_allow_html=True)
             st.dataframe(
-                df.style.applymap(
-                    lambda v: "color: #FF6B35; font-weight: bold" if v == "⚠ Check" else "",
-                    subset=["RFI"]
-                ),
-                use_container_width=True,
-                height=320,
-            )
+                st.dataframe(df, use_container_width=True, height=320)
 
             cola, colb, _ = st.columns([1.5, 1.5, 5])
             with cola:
