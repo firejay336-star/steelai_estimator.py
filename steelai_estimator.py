@@ -1,8 +1,8 @@
-"""
+  """
 SteelAI Estimator — Australian Structural Steel Estimating Tool
 Single-file Streamlit app. Run with: streamlit run steelai_estimator.py
 """
-
+ 
 import streamlit as st
 import pandas as pd
 import random
@@ -18,7 +18,7 @@ from reportlab.platypus import (
     SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
     HRFlowable, KeepTogether
 )
-
+ 
 # ─────────────────────────────────────────────
 #  PAGE CONFIG & GLOBAL STYLES
 # ─────────────────────────────────────────────
@@ -28,14 +28,14 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed",
 )
-
+ 
 ORANGE = "#F77F00"
 DARK_BG = "#1A1A2E"
 CARD_BG = "#16213E"
 STEEL = "#0F3460"
 LIGHT_TEXT = "#E0E0E0"
 DIM_TEXT = "#A0A0A0"
-
+ 
 st.markdown(f"""
 <style>
   /* ── Global ── */
@@ -45,10 +45,10 @@ st.markdown(f"""
     color: {LIGHT_TEXT};
   }}
   .stApp {{ background-color: {DARK_BG}; }}
-
+ 
   /* ── Hide Streamlit chrome ── */
   #MainMenu, footer, header {{ visibility: hidden; }}
-
+ 
   /* ── Top banner ── */
   .top-banner {{
     background: linear-gradient(135deg, {STEEL} 0%, #0a2540 100%);
@@ -71,7 +71,7 @@ st.markdown(f"""
     color: {DIM_TEXT};
     margin-top: 2px;
   }}
-
+ 
   /* ── Stat cards ── */
   .stat-card {{
     background: {CARD_BG};
@@ -92,7 +92,7 @@ st.markdown(f"""
     text-transform: uppercase;
     letter-spacing: 0.8px;
   }}
-
+ 
   /* ── Section headings ── */
   .section-heading {{
     font-size: 1.1rem;
@@ -104,7 +104,7 @@ st.markdown(f"""
     border-bottom: 1px solid #2a3555;
     padding-bottom: 6px;
   }}
-
+ 
   /* ── Step indicators ── */
   .step-bar {{
     display: flex;
@@ -133,7 +133,7 @@ st.markdown(f"""
     background: #2a6049;
     color: #7fffd4;
   }}
-
+ 
   /* ── Cards / panels ── */
   .panel {{
     background: {CARD_BG};
@@ -142,7 +142,7 @@ st.markdown(f"""
     padding: 22px 24px;
     margin-bottom: 18px;
   }}
-
+ 
   /* ── Orange buttons ── */
   .stButton > button {{
     background-color: {ORANGE} !important;
@@ -155,14 +155,14 @@ st.markdown(f"""
     transition: opacity 0.15s !important;
   }}
   .stButton > button:hover {{ opacity: 0.88 !important; }}
-
+ 
   /* secondary / ghost */
   .btn-secondary > button {{
     background-color: transparent !important;
     border: 2px solid {ORANGE} !important;
     color: {ORANGE} !important;
   }}
-
+ 
   /* ── Input fields ── */
   .stTextInput > div > div > input,
   .stNumberInput > div > div > input,
@@ -173,13 +173,13 @@ st.markdown(f"""
     border: 1px solid #2a3555 !important;
     border-radius: 6px !important;
   }}
-
+ 
   /* ── Data editor / tables ── */
   .stDataFrame, .stDataEditor {{
     border-radius: 8px !important;
     overflow: hidden;
   }}
-
+ 
   /* ── RFI flag badge ── */
   .rfi-badge {{
     background: #7b2d2d;
@@ -191,7 +191,7 @@ st.markdown(f"""
     margin-left: 8px;
     letter-spacing: 0.5px;
   }}
-
+ 
   /* ── Estimate history row ── */
   .history-row {{
     display: flex;
@@ -212,7 +212,7 @@ st.markdown(f"""
     font-size: 0.78rem;
     color: {DIM_TEXT};
   }}
-
+ 
   /* ── Totals box ── */
   .totals-box {{
     background: {STEEL};
@@ -237,8 +237,8 @@ st.markdown(f"""
   }}
 </style>
 """, unsafe_allow_html=True)
-
-
+ 
+ 
 # ─────────────────────────────────────────────
 #  SESSION STATE INIT
 # ─────────────────────────────────────────────
@@ -262,10 +262,10 @@ def init_state():
     for k, v in defaults.items():
         if k not in st.session_state:
             st.session_state[k] = v
-
+ 
 init_state()
-
-
+ 
+ 
 # ─────────────────────────────────────────────
 #  DEFAULT 2026 QLD RATES
 # ─────────────────────────────────────────────
@@ -306,7 +306,7 @@ DEFAULT_RATES = {
     "CRANE 10T":        ("Crane Lift 10T (per hr)",    "HR", 280.00,   0.00),
     "ERECTION LABOUR":  ("Steel Erection Labour",      "HR",   0.00, 115.00),
 }
-
+ 
 STEEL_MEMBERS = {
     "UB":     ["UB 150x14 kg/m","UB 200x25 kg/m","UB 250x31 kg/m","UB 310x40 kg/m","UB 360x51 kg/m","UB 410x60 kg/m"],
     "UC":     ["UC 100x14 kg/m","UC 150x23 kg/m","UC 200x46 kg/m","UC 250x73 kg/m"],
@@ -319,8 +319,8 @@ STEEL_MEMBERS = {
     "FINISH": ["PRIMER COAT","GALVANISE"],
     "ERECT":  ["CRANE 10T","ERECTION LABOUR"],
 }
-
-
+ 
+ 
 # ─────────────────────────────────────────────
 #  HELPERS
 # ─────────────────────────────────────────────
@@ -334,7 +334,7 @@ def banner():
       </div>
     </div>
     """, unsafe_allow_html=True)
-
+ 
 def step_bar(current):
     steps = ["1 · Project Details", "2 · Upload Drawings", "3 · AI Extraction",
              "4 · Pricing", "5 · Review & Export"]
@@ -344,17 +344,17 @@ def step_bar(current):
         html += f'<div class="step {cls}">{s}</div>'
     html += '</div>'
     st.markdown(html, unsafe_allow_html=True)
-
+ 
 def fmt_aud(v):
     return f"${v:,.2f}"
-
+ 
 def fmt_aud_int(v):
     return f"${int(round(v)):,}"
-
+ 
 def est_id():
     return f"EST-{datetime.now().strftime('%y%m%d%H%M%S')}"
-
-
+ 
+ 
 # ─────────────────────────────────────────────
 #  AI EXTRACTION SIMULATION
 # ─────────────────────────────────────────────
@@ -365,9 +365,9 @@ def simulate_extraction(filenames: list) -> pd.DataFrame:
     In production: replace with vision/OCR API call.
     """
     random.seed(sum(ord(c) for fn in filenames for c in fn) if filenames else 42)
-
+ 
     fn_text = " ".join(filenames).upper()
-
+ 
     # Decide which member groups to include based on filenames + random
     groups_to_include = []
     if any(x in fn_text for x in ["FRAMING","BEAM","FLOOR","ROOF"]):
@@ -380,20 +380,20 @@ def simulate_extraction(filenames: list) -> pd.DataFrame:
         groups_to_include += ["ANGLE","PLATE","BOLT"]
     if not groups_to_include:
         groups_to_include = list(STEEL_MEMBERS.keys())
-
+ 
     # Always include bolts, welds, erection
     for g in ["BOLT","WELD","ERECT","FINISH"]:
         if g not in groups_to_include:
             groups_to_include.append(g)
-
+ 
     rows = []
     rfi_threshold = 0.18  # 18% chance any item needs an RFI
-
+ 
     for grp in groups_to_include:
         members = STEEL_MEMBERS[grp]
         n_items = random.randint(1, min(3, len(members)))
         chosen = random.sample(members, n_items)
-
+ 
         for key in chosen:
             desc, unit, supply, labour = DEFAULT_RATES[key]
             # Realistic quantities per unit type
@@ -409,7 +409,7 @@ def simulate_extraction(filenames: list) -> pd.DataFrame:
                 qty = random.randint(4, 32)
             else:
                 qty = round(random.uniform(1, 50), 1)
-
+ 
             rfi = random.random() < rfi_threshold
             rows.append({
                 "Member Code": key,
@@ -420,10 +420,10 @@ def simulate_extraction(filenames: list) -> pd.DataFrame:
                 "Labour Rate ($/unit)": labour,
                 "RFI": "⚠ Check" if rfi else "",
             })
-
+ 
     return pd.DataFrame(rows)
-
-
+ 
+ 
 # ─────────────────────────────────────────────
 #  TOTALS CALCULATOR
 # ─────────────────────────────────────────────
@@ -432,7 +432,7 @@ def compute_totals(df, markup_pct, contingency_pct):
     df["Supply Total"] = df["Qty"] * df["Supply Rate ($/unit)"]
     df["Labour Total"] = df["Qty"] * df["Labour Rate ($/unit)"]
     df["Line Total"] = df["Supply Total"] + df["Labour Total"]
-
+ 
     supply_sub   = df["Supply Total"].sum()
     labour_sub   = df["Labour Total"].sum()
     subtotal     = supply_sub + labour_sub
@@ -441,7 +441,7 @@ def compute_totals(df, markup_pct, contingency_pct):
     pre_gst      = subtotal + markup_val + contingency
     gst          = pre_gst * 0.10
     grand_total  = pre_gst + gst
-
+ 
     return {
         "df": df,
         "supply_sub": supply_sub,
@@ -453,8 +453,8 @@ def compute_totals(df, markup_pct, contingency_pct):
         "gst": gst,
         "grand_total": grand_total,
     }
-
-
+ 
+ 
 # ─────────────────────────────────────────────
 #  PDF GENERATOR (reportlab)
 # ─────────────────────────────────────────────
@@ -464,7 +464,7 @@ DARK_RL    = colors.HexColor("#1A1A2E")
 WHITE_RL   = colors.white
 LGREY_RL   = colors.HexColor("#F2F4F8")
 MGREY_RL   = colors.HexColor("#CBD0DC")
-
+ 
 def build_pdf(totals, project_name, client_name, project_number,
               project_location, revision, markup_pct, contingency_pct):
     buf = io.BytesIO()
@@ -473,17 +473,17 @@ def build_pdf(totals, project_name, client_name, project_number,
         leftMargin=18*mm, rightMargin=18*mm,
         topMargin=16*mm, bottomMargin=18*mm,
     )
-
+ 
     styles = getSampleStyleSheet()
     normal  = ParagraphStyle("n",  parent=styles["Normal"],  fontSize=8,  leading=11, textColor=colors.HexColor("#333333"))
     small   = ParagraphStyle("sm", parent=styles["Normal"],  fontSize=7,  leading=10, textColor=colors.HexColor("#555555"))
     heading = ParagraphStyle("h",  parent=styles["Heading1"],fontSize=10, leading=14, textColor=STEEL_RL, spaceAfter=4)
     bold8   = ParagraphStyle("b8", parent=styles["Normal"],  fontSize=8,  leading=11, fontName="Helvetica-Bold")
     rfi_sty = ParagraphStyle("rfi",parent=styles["Normal"],  fontSize=7,  leading=10, textColor=colors.HexColor("#CC3300"), fontName="Helvetica-Bold")
-
+ 
     story = []
     W = doc.width
-
+ 
     # ── Header block ──
     header_data = [[
         Paragraph(f"<font size=18><b>🏗 SteelAI Estimator</b></font>", styles["Normal"]),
@@ -504,12 +504,12 @@ def build_pdf(totals, project_name, client_name, project_number,
     ]))
     story.append(header_tbl)
     story.append(Spacer(1, 8*mm))
-
+ 
     # ── Project info ──
     story.append(Paragraph("PROJECT INFORMATION", heading))
     story.append(HRFlowable(width="100%", thickness=1, color=ORANGE_RL))
     story.append(Spacer(1, 3*mm))
-
+ 
     info_data = [
         ["Project Name:", project_name or "—",   "Project No.:", project_number or "—"],
         ["Client:",       client_name or "—",    "Location:",    project_location or "—"],
@@ -530,16 +530,16 @@ def build_pdf(totals, project_name, client_name, project_number,
     ]))
     story.append(info_tbl)
     story.append(Spacer(1, 6*mm))
-
+ 
     # ── Itemised table ──
     story.append(Paragraph("ITEMISED TAKEOFF & PRICING", heading))
     story.append(HRFlowable(width="100%", thickness=1, color=ORANGE_RL))
     story.append(Spacer(1, 3*mm))
-
+ 
     df = totals["df"]
     col_heads = ["#","Description","Unit","Qty","Supply\nRate","Labour\nRate","Supply\nTotal","Labour\nTotal","Line\nTotal","RFI"]
     col_widths = [W*0.04, W*0.22, W*0.045, W*0.055, W*0.068, W*0.068, W*0.077, W*0.077, W*0.08, W*0.068]
-
+ 
     tbl_data = [col_heads]
     for i, row in df.iterrows():
         line = [
@@ -555,7 +555,7 @@ def build_pdf(totals, project_name, client_name, project_number,
             Paragraph(row["RFI"] if row["RFI"] else "", rfi_sty),
         ]
         tbl_data.append(line)
-
+ 
     item_tbl = Table(tbl_data, colWidths=col_widths, repeatRows=1)
     row_count = len(tbl_data)
     item_style = [
@@ -586,12 +586,12 @@ def build_pdf(totals, project_name, client_name, project_number,
     item_tbl.setStyle(TableStyle(item_style))
     story.append(item_tbl)
     story.append(Spacer(1, 6*mm))
-
+ 
     # ── Subtotals section ──
     story.append(Paragraph("ESTIMATE SUMMARY", heading))
     story.append(HRFlowable(width="100%", thickness=1, color=ORANGE_RL))
     story.append(Spacer(1, 3*mm))
-
+ 
     rfi_items = df[df["RFI"] != ""]
     sum_rows = [
         ["Supply Materials Subtotal", fmt_aud(totals["supply_sub"])],
@@ -608,7 +608,7 @@ def build_pdf(totals, project_name, client_name, project_number,
         Paragraph(f"<b>{fmt_aud(totals['grand_total'])}</b>", ParagraphStyle("gv", parent=styles["Normal"], fontSize=10, fontName="Helvetica-Bold", textColor=ORANGE_RL, alignment=TA_RIGHT)),
     ]
     sum_rows_p.append(grand_row)
-
+ 
     sum_tbl = Table(sum_rows_p, colWidths=[W*0.65, W*0.35])
     sum_tbl.setStyle(TableStyle([
         ("ALIGN",         (1,0), (1,-1), "RIGHT"),
@@ -624,7 +624,7 @@ def build_pdf(totals, project_name, client_name, project_number,
     ]))
     story.append(sum_tbl)
     story.append(Spacer(1, 5*mm))
-
+ 
     # ── RFI Summary ──
     if len(rfi_items) > 0:
         story.append(Paragraph("⚠ RFI / CLARIFICATION FLAGS", ParagraphStyle(
@@ -640,7 +640,7 @@ def build_pdf(totals, project_name, client_name, project_number,
         for _, row in rfi_items.iterrows():
             story.append(Paragraph(f"• {row['Description']} — Qty: {row['Qty']:g} {row['Unit']} — verify scope and connection details", small))
         story.append(Spacer(1, 3*mm))
-
+ 
     # ── Footer ──
     story.append(HRFlowable(width="100%", thickness=0.5, color=MGREY_RL))
     story.append(Spacer(1, 2*mm))
@@ -651,24 +651,24 @@ def build_pdf(totals, project_name, client_name, project_number,
         "SteelAI Estimator · ABN XX XXX XXX XXX · Queensland, Australia</font>"
     )
     story.append(Paragraph(footer_text, ParagraphStyle("foot", parent=styles["Normal"], textColor=colors.HexColor("#888888"), alignment=TA_CENTER)))
-
+ 
     doc.build(story)
     buf.seek(0)
     return buf.read()
-
-
+ 
+ 
 # ─────────────────────────────────────────────
 #  PAGES
 # ─────────────────────────────────────────────
-
+ 
 def page_dashboard():
     banner()
-
+ 
     estimates = st.session_state.estimates
     total_val = sum(e.get("grand_total", 0) for e in estimates)
     completed = sum(1 for e in estimates if e.get("status") == "Complete")
     processing = len(estimates) - completed
-
+ 
     c1, c2, c3, c4 = st.columns(4)
     for col, num, label in [
         (c1, len(estimates),  "Total Estimates"),
@@ -682,7 +682,7 @@ def page_dashboard():
               <div class="stat-number">{num}</div>
               <div class="stat-label">{label}</div>
             </div>""", unsafe_allow_html=True)
-
+ 
     st.markdown("<br>", unsafe_allow_html=True)
     col_new, col_space = st.columns([2, 5])
     with col_new:
@@ -697,10 +697,10 @@ def page_dashboard():
             st.session_state.extracted_items = None
             st.session_state.pricing_df = None
             st.rerun()
-
+ 
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown('<div class="section-heading">Saved Estimates</div>', unsafe_allow_html=True)
-
+ 
     if not estimates:
         st.markdown('<div style="color:#A0A0A0;padding:24px;text-align:center;">No estimates yet. Click ＋ New Estimate to get started.</div>', unsafe_allow_html=True)
     else:
@@ -738,14 +738,14 @@ def page_dashboard():
                 if st.button("Delete", key=f"del_{idx}"):
                     st.session_state.estimates.pop(idx)
                     st.rerun()
-
-
+ 
+ 
 # ─────────────────────────────────────────────
 def page_wizard():
     banner()
     step = st.session_state.step
     step_bar(step)
-
+ 
     # ── STEP 1: Project Details ──
     if step == 1:
         st.markdown('<div class="section-heading">Step 1 · Project Details</div>', unsafe_allow_html=True)
@@ -761,10 +761,10 @@ def page_wizard():
                 st.session_state.client_name = cn
                 pnum = st.text_input("Project Number", value=st.session_state.project_number, placeholder="e.g. P2026-0042")
                 st.session_state.project_number = pnum
-
+ 
             rev = st.selectbox("Revision", ["Rev A","Rev B","Rev C","Rev D","IFC","Tender"], index=["Rev A","Rev B","Rev C","Rev D","IFC","Tender"].index(st.session_state.revision))
             st.session_state.revision = rev
-
+ 
         st.markdown("<br>", unsafe_allow_html=True)
         cola, colb, _ = st.columns([1.5, 1.5, 5])
         with cola:
@@ -778,7 +778,7 @@ def page_wizard():
                 else:
                     st.session_state.step = 2
                     st.rerun()
-
+ 
     # ── STEP 2: Upload Drawings ──
     elif step == 2:
         st.markdown('<div class="section-heading">Step 2 · Upload Steel Drawings</div>', unsafe_allow_html=True)
@@ -791,7 +791,7 @@ def page_wizard():
           </p>
         </div>
         """, unsafe_allow_html=True)
-
+ 
         uploaded = st.file_uploader(
             "Drop drawings here or click to browse",
             type=["pdf","png","jpg","jpeg","tiff","bmp"],
@@ -803,7 +803,7 @@ def page_wizard():
             st.success(f"✅ {len(uploaded)} file(s) ready: {', '.join(f.name for f in uploaded)}")
         elif st.session_state.uploaded_files:
             st.info(f"Previously loaded: {', '.join(st.session_state.uploaded_files)}")
-
+ 
         st.markdown("<br>", unsafe_allow_html=True)
         cola, colb, colc, _ = st.columns([1.5, 1.5, 2, 4])
         with cola:
@@ -823,11 +823,11 @@ def page_wizard():
                     st.session_state.uploaded_files = ["DEMO_STEEL_FRAME.pdf"]
                 st.session_state.step = 3
                 st.rerun()
-
+ 
     # ── STEP 3: AI Extraction ──
     elif step == 3:
         st.markdown('<div class="section-heading">Step 3 · AI Quantity Extraction</div>', unsafe_allow_html=True)
-
+ 
         fnames = st.session_state.uploaded_files or ["DEMO_FRAME.pdf"]
         st.markdown(f"""
         <div class="panel">
@@ -835,11 +835,11 @@ def page_wizard():
           {'<br>'.join(f"📄 {f}" for f in fnames)}
         </div>
         """, unsafe_allow_html=True)
-
+ 
         run_col, _ = st.columns([2, 6])
         with run_col:
             run_extract = st.button("🤖 Run AI Extraction", key="run_extract")
-
+ 
         if run_extract or st.session_state.extracted_items is not None:
             if run_extract:
                 with st.spinner("Analysing drawings…"):
@@ -849,7 +849,7 @@ def page_wizard():
                     st.success(f"✅ Extraction complete — {len(df)} line items identified.")
             else:
                 df = pd.read_json(st.session_state.extracted_items)
-
+ 
             rfi_count = (df["RFI"] != "").sum()
             c1, c2, c3 = st.columns(3)
             c1.metric("Line Items", len(df))
@@ -858,12 +858,11 @@ def page_wizard():
                 c3.metric("⚠ RFI Flags", rfi_count, delta="Needs review", delta_color="inverse")
             else:
                 c3.metric("RFI Flags", 0)
-
+ 
             st.markdown("<br>", unsafe_allow_html=True)
             st.markdown('<div class="section-heading">Extracted Quantities</div>', unsafe_allow_html=True)
-            st.dataframe(
-                st.dataframe(df, use_container_width=True, height=320)
-
+            st.dataframe(df, use_container_width=True, height=320)
+ 
             cola, colb, _ = st.columns([1.5, 1.5, 5])
             with cola:
                 if st.button("← Back"):
@@ -879,7 +878,7 @@ def page_wizard():
                 if st.button("← Back"):
                     st.session_state.step = 2
                     st.rerun()
-
+ 
     # ── STEP 4: Pricing Editor ──
     elif step == 4:
         st.markdown('<div class="section-heading">Step 4 · Edit Pricing & Quantities</div>', unsafe_allow_html=True)
@@ -891,16 +890,16 @@ def page_wizard():
           </span>
         </div>
         """, unsafe_allow_html=True)
-
+ 
         if st.session_state.extracted_items is None:
             st.warning("No extraction data — run AI Extraction first.")
             if st.button("← Back"):
                 st.session_state.step = 3
                 st.rerun()
             return
-
+ 
         df = pd.read_json(st.session_state.extracted_items)
-
+ 
         edited = st.data_editor(
             df[["Description","Unit","Qty","Supply Rate ($/unit)","Labour Rate ($/unit)","RFI"]],
             use_container_width=True,
@@ -915,7 +914,7 @@ def page_wizard():
             },
             key="pricing_editor",
         )
-
+ 
         st.markdown("<br>", unsafe_allow_html=True)
         c1, c2 = st.columns(2)
         with c1:
@@ -928,7 +927,7 @@ def page_wizard():
                 "Contingency %", min_value=0.0, max_value=50.0,
                 value=st.session_state.contingency_pct, step=0.5, format="%.1f"
             )
-
+ 
         cola, colb, _ = st.columns([1.5, 1.5, 5])
         with cola:
             if st.button("← Back"):
@@ -941,21 +940,21 @@ def page_wizard():
                 st.session_state.extracted_items = edited.to_json()
                 st.session_state.step = 5
                 st.rerun()
-
+ 
     # ── STEP 5: Review & Export ──
     elif step == 5:
         st.markdown('<div class="section-heading">Step 5 · Estimate Review & Export</div>', unsafe_allow_html=True)
-
+ 
         if st.session_state.extracted_items is None:
             st.warning("No data. Please restart and complete extraction.")
             if st.button("← Start Over"):
                 st.session_state.step = 1
                 st.rerun()
             return
-
+ 
         df = pd.read_json(st.session_state.extracted_items)
         totals = compute_totals(df, st.session_state.markup_pct, st.session_state.contingency_pct)
-
+ 
         # Project header
         st.markdown(f"""
         <div class="panel">
@@ -965,26 +964,26 @@ def page_wizard():
           <span style="margin-left:16px;font-size:0.82rem;color:#A0A0A0;">{st.session_state.project_number} · {st.session_state.project_location} · {st.session_state.revision}</span>
         </div>
         """, unsafe_allow_html=True)
-
+ 
         # Itemised table
         display_df = totals["df"].copy()
         for col in ["Supply Total","Labour Total","Line Total"]:
             display_df[col] = display_df[col].map(fmt_aud)
         display_df["Supply Rate ($/unit)"] = display_df["Supply Rate ($/unit)"].map(fmt_aud)
         display_df["Labour Rate ($/unit)"] = display_df["Labour Rate ($/unit)"].map(fmt_aud)
-
+ 
         st.dataframe(
             display_df[["Description","Unit","Qty","Supply Rate ($/unit)","Labour Rate ($/unit)","Supply Total","Labour Total","Line Total","RFI"]],
             use_container_width=True, height=340,
         )
-
+ 
         # RFI warnings
         rfi_df = totals["df"][totals["df"]["RFI"] != ""]
         if len(rfi_df) > 0:
             st.markdown('<div class="section-heading" style="color:#FF6B35;">⚠ RFI / Clarification Flags</div>', unsafe_allow_html=True)
             for _, row in rfi_df.iterrows():
                 st.warning(f"**{row['Description']}** — Qty: {row['Qty']:g} {row['Unit']} — verify scope before submission")
-
+ 
         # Totals box
         st.markdown("<br>", unsafe_allow_html=True)
         t = totals
@@ -1000,16 +999,16 @@ def page_wizard():
           <div class="total-grand"><span>GRAND TOTAL (incl. GST)</span><span>{fmt_aud(t['grand_total'])}</span></div>
         </div>
         """, unsafe_allow_html=True)
-
+ 
         # Actions row
         st.markdown("<br>", unsafe_allow_html=True)
         act1, act2, act3, act4 = st.columns(4)
-
+ 
         with act1:
             if st.button("← Edit Pricing"):
                 st.session_state.step = 4
                 st.rerun()
-
+ 
         with act2:
             if st.button("💾 Save Estimate"):
                 rec = {
@@ -1034,14 +1033,14 @@ def page_wizard():
                     st.session_state.estimates.append(rec)
                     st.session_state.current_estimate_id = len(st.session_state.estimates) - 1
                 st.success("✅ Estimate saved!")
-
+ 
         with act3:
             if st.button("📋 New Estimate"):
                 st.session_state.step = 1
                 st.session_state.extracted_items = None
                 st.session_state.current_estimate_id = None
                 st.rerun()
-
+ 
         with act4:
             # PDF download
             try:
@@ -1064,8 +1063,8 @@ def page_wizard():
                 )
             except Exception as e:
                 st.error(f"PDF error: {e}")
-
-
+ 
+ 
 # ─────────────────────────────────────────────
 #  ROUTER
 # ─────────────────────────────────────────────
