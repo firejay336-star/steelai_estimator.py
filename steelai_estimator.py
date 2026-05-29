@@ -28,6 +28,7 @@ if 'contingency_pct' not in st.session_state: st.session_state.contingency_pct =
 if 'scope_type' not in st.session_state: st.session_state.scope_type = "Supply & Install"
 
 def simulate_extraction():
+    """Simulated takeoff - later replaced with real vision model"""
     data = [
         {"Member Code": "STAIR1", "Description": "Main Egress Stair Stringers & Landings", "Unit": "EA", "Qty": 2, "Supply Rate": 85000, "Labour Rate": 42000, "Finish": "HDG", "RFI": ""},
         {"Member Code": "PLATE20", "Description": "20mm Base & Connection Plates", "Unit": "m2", "Qty": 45, "Supply Rate": 280, "Labour Rate": 180, "Finish": "Blast & Prime", "RFI": "⚠"},
@@ -103,7 +104,7 @@ def build_pdf(df, totals, project_name, client_name, project_number, scope_type)
     return buffer
 
 # ====================== UI ======================
-st.markdown('<p class="big-title">SteelAI Estimator v0.7</p>', unsafe_allow_html=True)
+st.markdown('<p class="big-title">SteelAI Estimator v0.8</p>', unsafe_allow_html=True)
 
 if st.button("New Estimate"):
     st.session_state.step = 1
@@ -133,11 +134,18 @@ elif st.session_state.step == 2:
                      "Hot Dip Galvanized (HDG)", "HDG + Powder Coat", "Fire Rated Intumescent"]
     st.multiselect("Finishes Required", finish_options, default=["Hot Dip Galvanized (HDG)", "Blasted & Primed"])
     
-    if st.button("Run AI Takeoff"):
-        st.session_state.extracted_items = simulate_extraction()
-        st.success("✅ Takeoff Complete")
-        st.session_state.step = 3
-        st.rerun()
+    st.subheader("📄 Drawing Upload")
+    uploaded_files = st.file_uploader("Upload drawings / PDFs (required for AI takeoff)", type=["pdf"], accept_multiple_files=True)
+    
+    if uploaded_files:
+        st.success(f"✅ {len(uploaded_files)} file(s) uploaded")
+        if st.button("🚀 Run AI Takeoff"):
+            st.session_state.extracted_items = simulate_extraction()
+            st.success("✅ AI Takeoff Complete (based on uploaded drawings)")
+            st.session_state.step = 3
+            st.rerun()
+    else:
+        st.warning("Please upload at least one drawing PDF to continue")
 
 elif st.session_state.step == 3:
     st.subheader("Review & Edit Items")
@@ -172,4 +180,4 @@ elif st.session_state.step == 4:
             mime="application/pdf"
         )
 
-st.sidebar.success("v0.7 - Error Fixed + Working PDF")
+st.sidebar.success("v0.8 - Upload Required + Cleaner Flow")
