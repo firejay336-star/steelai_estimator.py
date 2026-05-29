@@ -1,129 +1,140 @@
-"""
-SteelAI Estimator — Australian Structural Steel Estimating Tool
-Single-file Streamlit app.
-"""
-
 import streamlit as st
 import pandas as pd
 import random
 import io
 from datetime import datetime
-from reportlab.lib.pagesizes import A4
-from reportlab.lib import colors
-from reportlab.lib.units import mm
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.enums import TA_CENTER, TA_RIGHT
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
 
-# ─────────────────────────────────────────────
-# PAGE CONFIG & GLOBAL STYLES
-# ─────────────────────────────────────────────
-st.set_page_config(page_title="SteelAI Estimator", page_icon="🏗️", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="SteelAI Estimator", page_icon="🏗️", layout="wide")
 
-ORANGE = "#F77F00"
-DARK_BG = "#1A1A2E"
-CARD_BG = "#16213E"
-STEEL = "#0F3460"
-LIGHT_TEXT = "#E0E0E0"
-DIM_TEXT = "#A0A0A0"
-
-st.markdown(f"""
+# ================== STYLES ==================
+st.markdown("""
 <style>
-  html, body, [class*="css"] {{ font-family: 'Segoe UI', system-ui, sans-serif; background-color: {DARK_BG}; color: {LIGHT_TEXT}; }}
-  .stApp {{ background-color: {DARK_BG}; }}
-  #MainMenu, footer, header {{ visibility: hidden; }}
-  .top-banner {{ background: linear-gradient(135deg, {STEEL} 0%, #0a2540 100%); padding: 18px 28px; border-bottom: 3px solid {ORANGE}; display: flex; align-items: center; gap: 16px; margin-bottom: 24px; border-radius: 0 0 12px 12px; }}
-  .banner-title {{ font-size: 1.9rem; font-weight: 800; color: white; letter-spacing: -0.5px; }}
-  .stat-card {{ background: {CARD_BG}; border: 1px solid #2a3555; border-left: 4px solid {ORANGE}; border-radius: 8px; padding: 16px 20px; text-align: center; }}
-  .stat-number {{ font-size: 2rem; font-weight: 700; color: {ORANGE}; }}
-  .section-heading {{ font-size: 1.1rem; font-weight: 700; color: {ORANGE}; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; border-bottom: 1px solid #2a3555; padding-bottom: 6px; }}
+    .stApp { background-color: #1A1A2E; color: #E0E0E0; }
+    .top-banner { background: linear-gradient(135deg, #0F3460, #16213E); padding: 20px; border-bottom: 4px solid #F77F00; }
+    .section-heading { color: #F77F00; font-size: 1.3rem; font-weight: 700; margin: 20px 0 10px 0; }
 </style>
 """, unsafe_allow_html=True)
 
-# ─────────────────────────────────────────────
-# SESSION STATE
-# ─────────────────────────────────────────────
-if "page" not in st.session_state:
-    st.session_state.page = "dashboard"
-if "step" not in st.session_state:
-    st.session_state.step = 1
-if "project_name" not in st.session_state:
-    st.session_state.project_name = ""
-if "client_name" not in st.session_state:
-    st.session_state.client_name = ""
-if "project_number" not in st.session_state:
-    st.session_state.project_number = ""
-if "project_location" not in st.session_state:
-    st.session_state.project_location = ""
-if "revision" not in st.session_state:
-    st.session_state.revision = "Rev A"
-if "uploaded_files" not in st.session_state:
-    st.session_state.uploaded_files = []
-if "extracted_items" not in st.session_state:
-    st.session_state.extracted_items = None
-if "markup_pct" not in st.session_state:
-    st.session_state.markup_pct = 15.0
-if "contingency_pct" not in st.session_state:
-    st.session_state.contingency_pct = 5.0
-if "estimates" not in st.session_state:
-    st.session_state.estimates = []
-if "current_estimate_id" not in st.session_state:
-    st.session_state.current_estimate_id = None
+# ================== SESSION STATE ==================
+for key, default in {
+    "page": "dashboard",
+    "step": 1,
+    "project_name": "",
+    "client_name": "",
+    "project_number": "",
+    "project_location": "",
+    "revision": "Rev A",
+    "uploaded_files": [],
+    "extracted_items": None,
+    "markup_pct": 15.0,
+    "contingency_pct": 5.0,
+    "estimates": [],
+    "current_estimate_id": None,
+}.items():
+    if key not in st.session_state:
+        st.session_state[key] = default
 
-# ─────────────────────────────────────────────
-# DEFAULT RATES + MEMBERS
-# ─────────────────────────────────────────────
-DEFAULT_RATES = { ... }  # (keep your full DEFAULT_RATES dict here - I shortened it for message length)
-# Paste your full DEFAULT_RATES and STEEL_MEMBERS from previous version here
+# ================== DEFAULT RATES (short version for now) ==================
+DEFAULT_RATES = {
+    "UB 410x60 kg/m": ("Universal Beam 410UB60", "LM", 76.0, 38.0),
+    "UB 310x40 kg/m": ("Universal Beam 310UB40", "LM", 50.0, 34.0),
+    "UC 250x73 kg/m": ("Universal Column 250UC73", "LM", 92.0, 42.0),
+    # Add more as needed
+}
 
-# (I'm assuming you still have the full DEFAULT_RATES and STEEL_MEMBERS dicts from before.
-# If you lost them, tell me and I'll send them again.)
+# ================== SIMULATE EXTRACTION ==================
+def simulate_extraction(fnames):
+    random.seed(42)
+    rows = []
+    for i in range(12):
+        rows.append({
+            "Member Code": f"UB {random.randint(200,500)}x{random.randint(20,60)}",
+            "Description": "Universal Beam",
+            "Unit": "LM",
+            "Qty": round(random.uniform(10, 120), 1),
+            "Supply Rate ($/unit)": random.uniform(30, 90),
+            "Labour Rate ($/unit)": random.uniform(25, 45),
+            "RFI": "⚠ Check" if random.random() < 0.3 else "",
+        })
+    return pd.DataFrame(rows)
 
-# ─────────────────────────────────────────────
-# HELPERS + SIMULATE EXTRACTION + PDF (keep your existing functions)
-# ─────────────────────────────────────────────
+# ================== DASHBOARD ==================
+def page_dashboard():
+    st.markdown('<div class="top-banner"><h1>🏗️ SteelAI Estimator</h1><p>Australian Structural Steel • 2026 QLD Rates</p></div>', unsafe_allow_html=True)
+    
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("Total Estimates", len(st.session_state.estimates))
+    col2.metric("Completed", sum(1 for e in st.session_state.estimates if e.get("status") == "Complete"))
+    
+    if st.button("＋ New Estimate", type="primary", use_container_width=True):
+        st.session_state.page = "wizard"
+        st.session_state.step = 1
+        st.rerun()
 
-def simulate_extraction(filenames):
-    # Your existing simulate_extraction function (unchanged)
-    random.seed(sum(ord(c) for fn in filenames for c in fn) if filenames else 42)
-    # ... rest of your simulate_extraction code ...
-    return pd.DataFrame(rows)   # make sure it returns a DataFrame
+    st.markdown("### Saved Estimates")
+    if not st.session_state.estimates:
+        st.info("No estimates yet. Create one above.")
+    else:
+        for est in reversed(st.session_state.estimates):
+            st.write(f"**{est.get('project_name', '—')}** — ${est.get('grand_total', 0):,.0f}")
 
-# Keep your compute_totals, build_pdf, banner, step_bar, etc.
-
-# ─────────────────────────────────────────────
-# MAIN WIZARD (UPDATED STEP 3)
-# ─────────────────────────────────────────────
-
+# ================== WIZARD ==================
 def page_wizard():
-    # ... keep your banner and step_bar ...
+    st.title("New Estimate")
+    step = st.session_state.step
 
-    if st.session_state.step == 3:
-        st.markdown('<div class="section-heading">Step 3 · AI Quantity Extraction</div>', unsafe_allow_html=True)
-        
-        fnames = st.session_state.uploaded_files or ["DEMO.pdf"]
-        st.write("Files queued:", fnames)
-        
-        if st.button("🤖 Run AI Extraction"):
+    if step == 1:
+        st.subheader("Step 1: Project Details")
+        st.session_state.project_name = st.text_input("Project Name", st.session_state.project_name)
+        st.session_state.client_name = st.text_input("Client", st.session_state.client_name)
+        if st.button("Next →"):
+            st.session_state.step = 2
+            st.rerun()
+
+    elif step == 2:
+        st.subheader("Step 2: Upload Drawings")
+        uploaded = st.file_uploader("Upload drawings", accept_multiple_files=True, type=["pdf","jpg","png"])
+        if uploaded:
+            st.session_state.uploaded_files = [f.name for f in uploaded]
+        if st.button("Next →"):
+            st.session_state.step = 3
+            st.rerun()
+
+    elif step == 3:
+        st.subheader("Step 3: AI Extraction")
+        if st.button("Run AI Extraction"):
             with st.spinner("Extracting..."):
-                import time
-                time.sleep(1.2)
-                df = simulate_extraction(fnames)
-                st.session_state.extracted_items = df.to_dict('records')   # FIXED LINE
-            st.success(f"✅ Extraction complete — {len(df)} line items identified.")
-
+                df = simulate_extraction(st.session_state.uploaded_files)
+                st.session_state.extracted_items = df.to_dict('records')
+            st.success(f"Extraction complete — {len(df)} items")
+        
         if st.session_state.extracted_items:
             df = pd.DataFrame(st.session_state.extracted_items)
-            st.dataframe(df, use_container_width=True, height=400)
-            
+            st.dataframe(df, use_container_width=True)
             if st.button("Next → Pricing"):
                 st.session_state.step = 4
                 st.rerun()
 
-    # Keep the rest of your steps (4 and 5) as they were
+    elif step == 4:
+        st.subheader("Step 4: Pricing")
+        if st.session_state.extracted_items:
+            df = pd.DataFrame(st.session_state.extracted_items)
+            st.dataframe(df, use_container_width=True)
+        if st.button("Next → Review"):
+            st.session_state.step = 5
+            st.rerun()
 
-# Router
+    elif step == 5:
+        st.subheader("Step 5: Review & Export")
+        st.success("Estimate ready!")
+        if st.button("Save Estimate"):
+            st.success("Saved!")
+        if st.button("New Estimate"):
+            st.session_state.page = "dashboard"
+            st.rerun()
+
+# ================== ROUTER ==================
 if st.session_state.page == "dashboard":
     page_dashboard()
-elif st.session_state.page == "wizard":
+else:
     page_wizard()
