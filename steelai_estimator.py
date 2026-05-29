@@ -848,7 +848,10 @@ def page_wizard():
                     st.session_state.extracted_items = df.to_json()
                     st.success(f"✅ Extraction complete — {len(df)} line items identified.")
             else:
-                df = pd.read_json(st.session_state.extracted_items)
+                if 'extracted_items' in st.session_state and st.session_state.extracted_items:
+    df = pd.DataFrame(st.session_state.extracted_items)
+else:
+    df = pd.DataFrame()  # fallback empty dataframe
  
             rfi_count = (df["RFI"] != "").sum()
             c1, c2, c3 = st.columns(3)
